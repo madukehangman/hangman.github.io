@@ -33,7 +33,7 @@ $(document).ready(function(){
         $("#status").text("Passwords do not match");
       }
     });
-    $("#password2").keyup(()=>{
+    $("#password , #password2").keyup(()=>{
       let pwd1 = $("#password").val();
       let pwd2 = $("#password2").val();
       if (pwd1 == pwd2){
