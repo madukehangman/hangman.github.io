@@ -12,7 +12,11 @@ $(document).ready(function(){
       // Initialize Firebase
 
     firebase.initializeApp(firebaseConfig);
-
+    firebase.auth().onAuthStateChanged(user => {
+      if (!!user){
+        alert(`${user.displayName || user.email}`);
+      }
+});
     $("#loginemail").click(()=>{
       firebase.auth().signInWithEmailAndPassword($("#email").val(), $("#password").val()).catch(function(error) {
         var errorCode = error.code;
