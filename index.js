@@ -1,75 +1,93 @@
 $(document).ready(function(){
     var firebaseConfig = {
-        apiKey: "AIzaSyBq2jUcFobTgICnoqzsg-oOZfW8Y29Bi70",
-        authDomain: "testloginmateo.firebaseapp.com",
-        databaseURL: "https://testloginmateo.firebaseio.com",
-        projectId: "testloginmateo",
-        storageBucket: "testloginmateo.appspot.com",
-        messagingSenderId: "960903154291",
-        appId: "1:960903154291:web:019bafb139c63ce024f806",
-        measurementId: "G-S5D2DPF9RY"
-      };
-      // Initialize Firebase
+    apiKey: "AIzaSyAcD_KArI4Mik1SIycQaS3BkNBwNkBCGus",
+    authDomain: "numgametest.firebaseapp.com",
+    databaseURL: "https://numgametest.firebaseio.com",
+    projectId: "numgametest",
+    storageBucket: "numgametest.appspot.com",
+    messagingSenderId: "77507396053",
+    appId: "1:77507396053:web:9255b99f5e487625807d5c",
+    measurementId: "G-QK8PJB40P3"
+  };
 
     firebase.initializeApp(firebaseConfig);
-    firebase.auth().onAuthStateChanged(user => {
-      if (!!user){
-        alert(`${user.displayName || user.email}`);
+    let $gameDB = firebase.database().ref("games");
+
+    class LobbyGame{
+      constructor(gameJSON){
+        this.gameJSON = gameJSON;
+        this.updateFromJSON(this.gameJSON);
+        this.gameJSON = this.toJSON();
+        this.currDB = firebase.database().ref("games/" + this.gameJSON.gameid);
+        this.currDB.set(this.gameJSON);
       }
-});
-    $("#loginemail").click(()=>{
-      firebase.auth().signInWithEmailAndPassword($("#email").val(), $("#password").val()).catch(function(error) {
-        var errorCode = error.code;
-        var errorMessage = error.message;
-        alert(errorMessage);
-      });
-    });
-    $("#register").click(()=>{
-      let pwd1 = $("#password").val();
-      let pwd2 = $("#password2").val();
-      if (pwd1 == pwd2){
-        firebase.auth().createUserWithEmailAndPassword($("#email").val(), $("#password").val()).catch(function(error) {
-          var errorCode = error.code;
-          var errorMessage = error.message;
-          alert(errorMessage);
-        });
-      } else {
-        $("#status").text("Passwords do not match");
+
+      updateFromJSON(gameJSON){
+        this.created = gameJSON.created || new Date().toLocaleString();
+        this.title = gameJSON.title || `New Game ${this.created}`;
+        this.gameid = gameJSON.gameid || `Game-${Math.floor(Math.random()*1000000000)}`;
+        this.maxplayers = gameJSON.maxplayers || 4;
+        this.players = gameJSON.players || {};
+        this.status = gameJSON.status || `Waiting ${Object.keys(this.players).length}/${this.maxplayers}`;
       }
-    });
-    $("#password , #password2").keyup(()=>{
-      let pwd1 = $("#password").val();
-      let pwd2 = $("#password2").val();
-      if (pwd1 == pwd2){
-        $("#status").css("color", "green");
-        $("#status").text("passwords match");
+      toJSON(){
+        let gameObj = {};
+        gameObj.created = this.created;
+        gameObj.gameid = this.gameid;
+        gameObj.title = this.title;
+        gameObj.maxplayers = this.maxplayers;
+        gameObj.players = this.players;
+        gameObj.status = this.status;
+        return gameObj;
       }
-      else{
-        $("#status").css("color", "red");
-        $("#status").text("passwords do not match");
+
+      updateDB(){
+        let data = this.toJSON();
+        this.currDB.set(this.gameJSON);
       }
+
+      addPlayer(){
+        let id = localStorage.getItem("uuid");
+        if(!id){
+          let id = Date.now();
+          localStorage.setItem("uuid", id);
+          let name = $("#name").val();
+          this.players[id] = {
+            "name" : name,
+            "id"   : id
+          }
+          this.updateDB();
+        }
+        else{
+          alert(`you have already joined: ${id}`);
+        }
+      }
+      removePlayer(){
+        let id = localStorage.getItem("uuid");
+        if(id){
+          delete this.players[id];
+          localStorage.removeItem("uuid");
+          this.updateDB();
+        }
+        else{
+          alert("You have not joined");
+        }
+      }
+    }
+
+    let aGame = new LobbyGame({});
+    let players = firebase.database().ref("games/" + aGame.gameid + "/players");
+
+    players.on("child_removed", (snapshot)=>{
+      console.log("child removed" + snapshot.val().name);
     });
 
-    $("#reset").click(()=>{
-      firebase.auth().sendPasswordResetEmail($("#email").val());
+    $("#join").on("click", ()=>{
+      aGame.addPlayer();
     });
 
-    $("#show1").change(()=>{
-      if($("#show1").is(":checked")){
-        $("#password").attr("type", "");
-      }
-      else{
-        $("#password").attr("type", "password");
-      }
-    });
-
-    $("#show2").change(()=>{
-      if($("#show2").is(":checked")){
-        $("#password2").attr("type", "");
-      }
-      else{
-        $("#password2").attr("type", "password");
-      }
+    $("#leave").on("click", ()=>{
+      aGame.removePlayer();
     });
 });
 
