@@ -77,7 +77,11 @@ $(document).ready(function(){
 
     let aGame = new LobbyGame({});
     let players = firebase.database().ref("games/" + aGame.gameid + "/players");
-
+    
+    players.on("child_added", (snapshot)=>{
+      console.log("child added" + snapshot.val().name);
+    });
+    
     players.on("child_removed", (snapshot)=>{
       console.log("child removed" + snapshot.val().name);
     });
