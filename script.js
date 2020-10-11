@@ -87,7 +87,7 @@ $(document).ready(function(){
               }
             }
             if(guesses_left == 0){
-              alert("you lose");
+              alert(`you lose!, the word was: ${random_word}`);
               $("#word").empty();
               $("#make_guess").hide();
               $("#label_guessed").hide();
