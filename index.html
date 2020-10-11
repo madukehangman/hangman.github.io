@@ -6,12 +6,16 @@
   <script src = "index.js"></script>
 </head>
 <body>
-  <h1 id = status>Game Status</h1>
-<input id = "name">
-<button id = join>Join Game</button>
-<button id = leave>Leave Game</button>
-<div id = "lobby">
-  <h1>Lobby</h1>
+  <div id = "game">
+  <h1>Hangman Game</h1>
+  <input id = "guess">
+  <button id = "start"> Click to start</button>
+  <button id = "make_guess">Make Guess</button>
+  <span id = "label_guessed">guessed letters: <span>
+    <span id = "guessed"></span>
+    <span id = "label_remaining">guesses remaining</span>
+    <span id = "remaining"></span>
+  <div id = "word" class = "container-fluid"></div>
 </div>
 </body>
 
