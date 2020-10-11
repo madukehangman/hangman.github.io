@@ -1,5 +1,4 @@
 $(document).ready(function(){
-    alert("starting");
     var firebaseConfig = {
         apiKey: "AIzaSyDvDRcJ1tAR-ebu0QocqaG0ZXU0276vNLA",
         authDomain: "simplehangman-3bbac.firebaseapp.com",
