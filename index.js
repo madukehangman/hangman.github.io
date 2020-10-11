@@ -1,98 +1,104 @@
 $(document).ready(function(){
     var firebaseConfig = {
-    apiKey: "AIzaSyAcD_KArI4Mik1SIycQaS3BkNBwNkBCGus",
-    authDomain: "numgametest.firebaseapp.com",
-    databaseURL: "https://numgametest.firebaseio.com",
-    projectId: "numgametest",
-    storageBucket: "numgametest.appspot.com",
-    messagingSenderId: "77507396053",
-    appId: "1:77507396053:web:9255b99f5e487625807d5c",
-    measurementId: "G-QK8PJB40P3"
+    apiKey: "AIzaSyDvDRcJ1tAR-ebu0QocqaG0ZXU0276vNLA",
+    authDomain: "simplehangman-3bbac.firebaseapp.com",
+    databaseURL: "https://simplehangman-3bbac.firebaseio.com",
+    projectId: "simplehangman-3bbac",
+    storageBucket: "simplehangman-3bbac.appspot.com",
+    messagingSenderId: "793883931570",
+    appId: "1:793883931570:web:8b7d77a1ae2f6787a9aaab"
   };
+  // Initialize Firebase
+firebase.initializeApp(firebaseConfig);
 
-    firebase.initializeApp(firebaseConfig);
-    let $gameDB = firebase.database().ref("games");
+let myDatabase = firebase.database();
 
-    class LobbyGame{
-      constructor(gameJSON){
-        this.gameJSON = gameJSON;
-        this.updateFromJSON(this.gameJSON);
-        this.gameJSON = this.toJSON();
-        this.currDB = firebase.database().ref("games/" + this.gameJSON.gameid);
-        this.currDB.set(this.gameJSON);
-      }
+$("#make_guess").hide();
+$("#label_guessed").hide();
+$("label_remaining").hide();
 
-      updateFromJSON(gameJSON){
-        this.created = gameJSON.created || new Date().toLocaleString();
-        this.title = gameJSON.title || `New Game ${this.created}`;
-        this.gameid = gameJSON.gameid || `Game-${Math.floor(Math.random()*1000000000)}`;
-        this.maxplayers = gameJSON.maxplayers || 4;
-        this.players = gameJSON.players || {};
-        this.status = gameJSON.status || `Waiting ${Object.keys(this.players).length}/${this.maxplayers}`;
-      }
-      toJSON(){
-        let gameObj = {};
-        gameObj.created = this.created;
-        gameObj.gameid = this.gameid;
-        gameObj.title = this.title;
-        gameObj.maxplayers = this.maxplayers;
-        gameObj.players = this.players;
-        gameObj.status = this.status;
-        return gameObj;
-      }
-
-      updateDB(){
-        let data = this.toJSON();
-        this.currDB.set(this.gameJSON);
-      }
-
-      addPlayer(){
-        let id = localStorage.getItem("uuid");
-        if(!id){
-          let id = Date.now();
-          localStorage.setItem("uuid", id);
-          let name = $("#name").val();
-          this.players[id] = {
-            "name" : name,
-            "id"   : id
-          }
-          this.updateDB();
-        }
-        else{
-          alert(`you have already joined: ${id}`);
-        }
-      }
-      removePlayer(){
-        let id = localStorage.getItem("uuid");
-        if(id){
-          delete this.players[id];
-          localStorage.removeItem("uuid");
-          this.updateDB();
-        }
-        else{
-          alert("You have not joined");
-        }
-      }
+$("#start").click(()=>{
+  var guesses_left = 5;
+  var d = new Date();
+  var start = d.getTime();
+  $("#remaining").text(guesses_left);
+  $("#start").hide();
+  $("#make_guess").show();
+  $("#label_guessed").show();
+  $("label_remaining").show();
+  
+  let guessed_letters = [];
+  $("#remaining").text(guesses_left);
+  let num_words = 187632;
+  let r = Math.floor(num_words *Math.random());
+  let random_num = r.toString();
+  myDatabase.ref("dictionary").child(random_num).once("value", ss=>{
+    let random_word = ss.val();
+    let word_len = random_word.length;
+    console.log(random_word);
+    for(var i = 0; i < word_len; i++){
+      $("#word").append(
+      `<span id = "${i}" class = "large">_ </span>`
+      );
     }
-
-    let aGame = new LobbyGame({});
-    let players = firebase.database().ref("games/" + aGame.gameid + "/players");
-    
-    players.on("child_added", (snapshot)=>{
-      console.log("child added" + snapshot.val().name);
+    $("#make_guess").click(()=>{
+      if($("#guess").val().length > 1){
+        alert("You can only guess a single letter at a time");
+      }
+      else{
+        var correct = false;
+        for(var i = 0; i < word_len; i++){
+          if(random_word[i] == $("#guess").val()){
+            correct = true;
+            $(`#${i}`).text(random_word[i]);
+          }
+        }
+        if (!correct){
+           if(!guessed_letters.includes($("#guess").val())){
+             guessed_letters.push($("#guess").val());
+             guesses_left--;
+           }
+           else{
+             alert(`${$("#guess").val()} has already been guessed`);
+           }
+           $("#guessed").text(guessed_letters);
+        }
+        else{
+          var finished = true;
+          for(var i = 0; i < word_len; i++){
+            if($(`#${i}`).text() != random_word[i]){
+              finished = false;
+            }
+          }
+          if(finished){
+            var e = new Date();
+            var stop = e.getTime();
+            
+            var elapsed = (stop - start) /1000;
+            var minutes = Math.floor((elapsed / 60));
+            var seconds = elapsed - minutes * 60;
+            
+            alert(`You won! Total time = ${minutes}:${seconds}`);
+            $("#word").empty();
+            $("#make_guess").hide();
+            $("#label_guessed").hide();
+            $("#start").show();
+          }
+        }
+        if(guesses_left == 0){
+          alert("you lose");
+          $("#word").empty();
+          $("#make_guess").hide();
+          $("#label_guessed").hide();
+          $("#label_remaining").hide();
+          $("#start").show();
+        }
+        $("#guess").val("");
+        $("#remaining").text(guesses_left);
+      }
     });
-    
-    players.on("child_removed", (snapshot)=>{
-      console.log("child removed" + snapshot.val().name);
-    });
-
-    $("#join").on("click", ()=>{
-      aGame.addPlayer();
-    });
-
-    $("#leave").on("click", ()=>{
-      aGame.removePlayer();
-    });
+  });
+});
 });
 
 
